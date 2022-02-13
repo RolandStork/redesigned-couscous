@@ -109,6 +109,9 @@ class Db:
         Returns:
             dict : containing configuration
         """
+        nrow = self.session.query(Configuration).count()
+        if nrow == 0:
+            return None
         result = self.session.query(Configuration).first()
         result_dict = result.__dict__
         return result_dict
