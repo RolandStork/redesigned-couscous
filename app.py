@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter import ttk
-# from ttkwidgets.autocomplete import AutocompleteEntry
+from ttkwidgets.autocomplete import AutocompleteEntry
 from pandas.io import clipboard
 
 def set_url(event):
@@ -8,6 +8,7 @@ def set_url(event):
     if value == '':
         url_search['values'] = url_list
         un_search.set('')
+        url_search.current('')
         e.configure(state='normal')
         e.delete(0, END)
         e.insert(0, '')
@@ -25,6 +26,7 @@ def set_url(event):
 def set_username(event):
     value = event.widget.get()
     if value == '':
+        url_search['values'] = url_list
         un_search['values'] = [*db[url_search.get()]]
         e.configure(state='normal')
         e.delete(0, END)
@@ -41,10 +43,10 @@ def set_username(event):
         e.delete(0, END)
         e.insert(0, db[url_search.get()][un_search.get()])
         e.configure(state='readonly')
+        url_search['values'] = url_list
 
 def get_password():
-    clipboard.copy(e.get())
-    # return db[url_search.get()][un_search.get()]
+    clipboard.copy(db[url_search.get()][un_search.get()])
 
 url_list = [
     "https://www.gmail.com/",
@@ -74,19 +76,19 @@ url_label.grid(row=0, column=0, pady=2)
 url_search = ttk.Combobox(root)
 url_search.grid(row=0, column=1, pady=2)
 url_search['values'] = url_list
-url_search.bind('<KeyRelease>', set_url)
+url_search.bind('<<ComboboxSelected>>', set_url)
 
 un_label = Label(root, text="User Name")
 un_label.grid(row=1, column=0, pady=2)
 un_search = ttk.Combobox(root)
 un_search.grid(row=1, column=1, pady=2)
 un_search['values'] = ''
-un_search.bind('<KeyRelease>', set_username)
+un_search.bind('<<ComboboxSelected>>', set_username)
 
 p_label = Label(root, text="Password")
 p_label.grid(row=2, column=0, pady=2)
 e = Entry(root)
-e.configure(state='readonly')
+e.configure(state='readonly', show="*")
 e.grid(row=2, column=1)
 x1=Button(root, text="❐", command=get_password)
 x1.grid(row=2, column=2)
