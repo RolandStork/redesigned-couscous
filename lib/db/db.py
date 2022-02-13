@@ -38,6 +38,35 @@ class Db:
         mk_session.configure(bind=engine)
         self.session = mk_session()
 
+    def search_passwords(self, fields_dict):
+        """search for passwords by search fields
+        results returned have to match every field/value given (and logic),
+        non-existent fields will be ignored, if an empty dictionary or None is
+        passed, a simple query without filters will be made.
+
+        Args:
+            fields_dict (dict): a dict containing table field name as keys and
+                wanted values as their value
+
+        Returns:
+            dict : containing results
+        """
+        query_base = self.session.query(Password)
+        current_query = query_base
+        if fields_dict and fields_dict != {}:
+            for fieldname in fields_dict:
+                prevquery = current_query
+                try:
+                    current_query = current_query.filter(
+                        getattr(Password, fieldname) == fields_dict[fieldname])
+                except AttributeError:
+                    current_query = prevquery
+        result = current_query.all()
+        result_dict = {}
+        for item in result:
+            result_dict[item.id] = item.__dict__
+        return result_dict
+
     def get_passwords(self, username=None, password_id=None):
         """gets passwords from db
 
@@ -103,6 +132,8 @@ def main():
     """main method for testing purposes"""
     database = Db()
     print(database.get_passwords())
+    search_fields = {'url': 'www.google.com', 'username': 'couscous@gmail.com'}
+    print(database.search_passwords(search_fields))
 
 
 if __name__ == "__main__":
