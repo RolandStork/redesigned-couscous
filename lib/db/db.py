@@ -14,8 +14,10 @@ class Password(Base):  # pylint: disable=R0903
     """password table"""
     __tablename__ = 'password'
     password_id = Column(Integer, primary_key=True, autoincrement=True)
-    username = Column(String(50))
-    password_hash = Column(String(128))
+    username = Column(String(50), nullable=False)
+    password_hash = Column(String(128), nullable=False)
+    link = Column(String(2000))
+    email = Column(String(254))
 
 
 class Configuration(Base):  # pylint: disable=R0903
