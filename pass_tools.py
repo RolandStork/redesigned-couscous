@@ -1,3 +1,5 @@
+from tkinter import Button, Canvas, Entry, Label, Tk, Frame, Checkbutton, IntVar, filedialog, PhotoImage, LabelFrame
+
 import random
 import os
 import hashlib
@@ -82,3 +84,112 @@ class Hasher():
             return True
         else:
             return False
+
+class GuiGenerator(Generator):
+    """
+    Generator but GUI
+    """
+    def __init__(self):
+        super().__init__()
+
+        self.window = Tk()
+        self.window.update()
+
+        logo = PhotoImage(file="mystery-box.png")
+        self.window.iconphoto(True, logo)
+        self.window.geometry("500x250")
+        self.window.resizable(False, False)
+        self.window.title("Password Generator")
+    
+    def gui_gen(self):
+        """
+        GUI Generator Function.
+        """
+        pass_label = Label(self.window, text="Password:")
+        pass_label.grid(
+            column=0,
+            row=0,
+            padx=(10,0),
+            pady=(10,0)
+        )
+
+        password_entry = Entry(self.window, width=50, text="asdjhads")
+        password_entry.grid(
+            column=1,
+            row=0,
+            padx=(0,0),
+            pady=(10,0)
+        )
+        
+        copy_to_clipboard = Button(self.window, text="Copy")
+        copy_to_clipboard.grid(
+            column=2,
+            row=0,
+            padx=(0,10),
+            pady=(10,0)
+        )
+
+
+        configuration_frame = LabelFrame(self.window, text="Configuration")
+        configuration_frame.grid(
+            columnspan=3
+        )
+
+
+        letter_variable = IntVar(value=1)
+        letter_checkbox = Checkbutton(
+            configuration_frame,
+            text="Letters  ",
+            variable=letter_variable,
+            onvalue=1,
+            offvalue=0,
+        )
+        letter_checkbox.grid(
+            column=0,
+            row=0
+        )
+
+        punctuation_variable = IntVar(value=1)
+        letter_checkbox = Checkbutton(
+            configuration_frame,
+            text="Punctuation  ",
+            variable=punctuation_variable,
+            onvalue=1,
+            offvalue=0,
+        )
+        letter_checkbox.grid(
+            column=1,
+            row=0
+        )
+
+        digits_variable = IntVar(value=1)
+        letter_checkbox = Checkbutton(
+            configuration_frame,
+            text="Digits  ",
+            variable=digits_variable,
+            onvalue=1,
+            offvalue=0,
+        )
+        letter_checkbox.grid(
+            column=2,
+            row=0
+        )
+
+        pass_label = Label(configuration_frame, text="Length:")
+        pass_label.grid(
+            column=0,
+            row=1,
+            sticky="w"
+        )
+
+        password_entry = Entry(configuration_frame, text="20", width=2)
+        password_entry.grid(
+            column=0,
+            row=1,
+            sticky="e"
+        )
+        
+
+gen = GuiGenerator()
+gen.gui_gen()
+gen.window.mainloop()

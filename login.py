@@ -11,7 +11,8 @@ class AuthenticationS():
 
     def __init__(self):
         self.db = Db()
-        self.new = self.db.get_configuration()
+        self.configuration = self.db.get_configuration()
+
         self.window = Tk()
         self.window.update()
 
@@ -85,9 +86,18 @@ class AuthenticationS():
         password_entry = Entry(self.window, width=30, show="*")
         password_entry.pack()
 
-        #TODO: Add feedback for the wrong password inserted
+        self.feedback = Label(self.window)
+        self.feedback.anchor(anchor="center")
+        self.feedback.pack()
 
-        self.keyfile_path = Label(self.window)
+        displayed_name = [i for i in self.configuration.get("keyfile_path", "").split("/")]
+
+        if len(displayed_name) > 3:
+            minimal_filepath = f"../{'/'.join(displayed_name[-3::])}"
+        else:
+            minimal_filepath = f"..{'/'.join(displayed_name[-3::])}"
+
+        self.keyfile_path = Label(self.window, text=minimal_filepath, fg="green")
         self.keyfile_path.anchor(anchor="center")
         self.keyfile_path.pack()
 
@@ -101,7 +111,11 @@ class AuthenticationS():
 
         login_button = Button(
             self.window,
-            text="Login", #TODO: Add command=
+            text="Login",
+            command=partial(
+                self.check_login_with_keyfile,
+                password_entry
+            )
         )
         login_button.config(anchor="center")
         login_button.pack(pady=(10,0))
@@ -120,22 +134,61 @@ class AuthenticationS():
         password_entry = Entry(self.window, width=30, show="*")
         password_entry.pack()
 
-        #TODO: Add feedback for the wrong password inserted
+        self.feedback = Label(self.window)
+        self.feedback.anchor(anchor="center")
+        self.feedback.pack()
 
         login_button = Button(
             self.window,
-            text="Login", #TODO: Add command=
+            text="Login",
+            command=partial(
+                self.check_login_without_keyfile,
+                password_entry
+            )
         )
         login_button.config(anchor="center")
         login_button.pack(pady=(10,0))
 
-    def check_login(self, password: str, keyfile_path: str = None):
+    def check_login_with_keyfile(self, password) -> bool:
         """
         This function will let you login to the database, and if set's up the encryption.
         """
-        # ERROR
-        # password_hash = Hasher().check_hash(password, hashed_version) 
-        pass
+        # Cheking Password
+        password_hash_check: bool = Hasher().check_hash(password.get(), self.configuration.get("password_hash"))
+
+        # Cheking KEYFILE
+        with open(self.configuration.get("keyfile_path"), "r") as file:
+            content = file.read()
+        
+        keyfile_hash_check: bool = Hasher().check_hash(content, self.configuration.get("keyfile_hash"))
+
+        if password_hash_check == True and keyfile_hash_check == True:
+            print("yay")
+            return True
+        else:
+            if keyfile_hash_check == True and password_hash_check == False:
+                self.feedback.config(text="Wrong Password!", fg="red")
+                return False
+            elif keyfile_hash_check == False and password_hash_check == True:
+                self.feedback.config(text="Wrong KEYFILE!", fg="red")
+                return False
+            else:
+                self.feedback.config(text="Wrong Password and KEYFILE!", fg="red")
+                return False
+
+    def check_login_without_keyfile(self, password) -> bool:
+        """
+        This function will let you login to the database, and if set's up the encryption.
+        """
+        # Cheking Password
+        password_hash_check: bool = Hasher().check_hash(password.get(), self.configuration.get("password_hash"))
+
+        if password_hash_check == True:
+            print("yay")
+            return True
+        else:
+            self.feedback.config(text="Wrong Password!", fg="red")
+            return False
 
     def save_info(self, master_password: str, confirmed_master_password: str, keyfile: int):
         """
@@ -158,18 +211,36 @@ class AuthenticationS():
                 with open("KEYFILE", "w") as file:
                     file.write(keyfile)
                 
+                keyfile_path = os.path.abspath("KEYFILE")
+                print(keyfile_path)
+                
                 # Password
                 password_hash: str = Hasher().create_hash(master_password)
 
                 # salt
                 salt: bytes = Generator().gen_salt()
+                
+                config_dict: dict = {
+                    "password_hash": password_hash,
+                    "keyfile_hash": keyfile_hash,
+                    "keyfile_path": keyfile_path,
+                    "salt": salt,
+                }
 
+                self.db.set_configuration(config_dict)
             else:
                 # Password
                 password_hash: str = Hasher().create_hash(master_password)
 
                 # salt
                 salt: bytes = Generator().gen_salt()
+
+                config_dict: dict = {
+                    "password_hash": password_hash,
+                    "salt": salt
+                }
+                
+                self.db.set_configuration(config_dict)
         else:
             self.feedback.config(text="Passwords Do Not Match", fg="red")
             return 1
@@ -188,9 +259,9 @@ class AuthenticationS():
             mode="r",
         )
         if file:
-            self.filepath = os.path.abspath(file.name)
+            filepath = os.path.abspath(file.name)
 
-            displayed_name = [i for i in self.filepath.split("/")]
+            displayed_name = [i for i in filepath.split("/")]
 
             if len(displayed_name) > 3:
                 minimal_filepath = f"../{'/'.join(displayed_name[-3::])}"
@@ -199,10 +270,22 @@ class AuthenticationS():
 
             self.keyfile_path.config(text=minimal_filepath, fg="green")
 
+            # Update Database
+            self.configuration["keyfile_path"] = filepath
+
+            new_config_dict: dict = {
+                "password_hash": self.configuration["password_hash"],
+                "keyfile_hash": self.configuration["keyfile_hash"],
+                "keyfile_path": self.configuration["keyfile_path"],
+                "salt": self.configuration["salt"]
+            }
+
+            self.db.set_configuration(new_config_dict)
+
 
 
 # Test
 auth = AuthenticationS()
-print(auth.new)
+print(auth.configuration)
 auth.new_user()
 auth.window.mainloop()

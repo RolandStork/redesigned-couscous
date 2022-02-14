@@ -1,7 +1,7 @@
 """db module"""
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, LargeBinary
 from sqlalchemy.orm import sessionmaker
 
 engine = create_engine('sqlite:///passwords.db', echo=True)
@@ -24,9 +24,10 @@ class Configuration(Base):  # pylint: disable=R0903
     """configuration table"""
     __tablename__ = 'configuration'
     configuration_id = Column(Integer, primary_key=True, autoincrement=True)
-    password_hash = Column(String(64))
-    keyfile_hash = Column(String(64))
-    salt = Column(String(128))
+    password_hash = Column(String(128))
+    keyfile_hash = Column(String(128))
+    keyfile_path = Column(String(4096))
+    salt = Column(LargeBinary())
 
 
 class Db:
