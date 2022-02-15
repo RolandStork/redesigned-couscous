@@ -3,15 +3,16 @@ from tkinter import ttk
 from tkinter import messagebox
 from pandas.io import clipboard
 from time import sleep
+# from tkinter import Canvas
+from PIL import ImageTk, Image
+from threading import Timer
 
 
 # from ttkwidgets.autocomplete import AutocompleteCombobox
 
-
 def clear_clipboard():
     sleep(10)
     clipboard.copy('')
-
 
 class App(Tk):
     f_size = 13
@@ -33,6 +34,11 @@ class App(Tk):
         self.geometry('300x50')
         self.iconbitmap('mystery-box.ico')
         self.geometry("340x200")
+
+        global openeye, closedeye
+        self.show_pass = False
+        openeye = PhotoImage(file="oe16.png")
+        closedeye = PhotoImage(file="ce16.png")
 
         self.url_label = ttk.Label(self, text="Website", font=('Helvetica', self.f_size), width=self.l_width)
         self.url_label.grid(row=1, column=0, pady=2)
@@ -64,8 +70,45 @@ class App(Tk):
         self.password.grid(row=5, column=1)
         # self.password.bind("<FocusIn>", self.clear_temp_text)
         self.password.bind("<Return>", self.create_password)
+        # self.e1 = Button(self, font=('Helvetica', self.f_size), text="👁", command=self.get_password)
+        # self.e1.grid(row=5, column=1, sticky='e')
+        self.button_qwer = Button(self, borderwidth=0, image=openeye, command=self.show_password)
+        self.button_qwer.image = openeye
+        self.button_qwer.grid(row=5, column=1, padx=(160, 10))
+
         self.x1 = Button(self, font=('Helvetica', self.f_size), text="❐", command=self.get_password)
         self.x1.grid(row=5, column=1, sticky='e')
+
+    def hide_password(self, *args):
+        global openeye, closedeye
+        self.button_qwer.grid_remove()
+        self.show_pass = not self.show_pass
+        self.button_qwer = Button(self, borderwidth=0, image=openeye, command=self.show_password)
+        self.button_qwer.image = openeye
+        self.button_qwer.grid(row=5, column=1, padx=(160, 10))
+        self.password.configure(state='readonly', show="*")
+
+    def show_password(self, *args):
+        global openeye, closedeye
+        self.button_qwer.grid_remove()
+        self.show_pass = not self.show_pass
+        if self.show_pass:
+            self.button_qwer = Button(self, borderwidth=0, image=closedeye, command=self.show_password)
+            self.button_qwer.image = closedeye
+            self.button_qwer.grid(row=5, column=1, padx=(160, 10))
+            self.password.configure(state='readonly', show="")
+            # sleep(1)
+            # self.hide_password()
+            t = Timer(1.0, self.hide_password)
+            t.start()
+        else:
+            self.button_qwer = Button(self, borderwidth=0, image=openeye, command=self.show_password)
+            self.button_qwer.image = openeye
+            self.button_qwer.grid(row=5, column=1, padx=(160, 10))
+            self.password.configure(state='readonly', show="*")
+
+    def print_(self, event):
+        print(event.widget.get())
 
     def reset_all(self):
         self.url_search['values'] = url_list
@@ -262,9 +305,13 @@ class App(Tk):
             # self.clipboard_append(self.db[self.url_search.get()][self.un_search.get()])
             # sleep(10)
             # self.clipboard_clear()
+            # t = Timer(5.0, self.clear_clipboard)
+            # t.start()
         except:
             messagebox.showerror("", "Error: Password not found. Please check website url and username")
 
+    def clear_clipboard(self):
+        self.clipboard_clear()
 
 if __name__ == "__main__":
     """ database needs to be sync with encrypt """
