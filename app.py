@@ -14,6 +14,7 @@ def clear_clipboard():
     sleep(10)
     clipboard.copy('')
 
+
 class App(Tk):
     f_size = 13
     l_width = 9
@@ -68,7 +69,8 @@ class App(Tk):
         self.password = ttk.Entry(self, font=('Helvetica', self.f_size), width=self.v_width - 5)
         self.password.configure(state='readonly', show="*")
         self.password.grid(row=5, column=1)
-        # self.password.bind("<FocusIn>", self.clear_temp_text)
+        self.password.bind("<FocusIn>", self.clear_temp_text)
+        self.password.bind("<Button-1>", self.clear_temp_text)
         self.password.bind("<Return>", self.create_password)
         # self.e1 = Button(self, font=('Helvetica', self.f_size), text="👁", command=self.get_password)
         # self.e1.grid(row=5, column=1, sticky='e')
@@ -111,7 +113,7 @@ class App(Tk):
         print(event.widget.get())
 
     def reset_all(self):
-        self.url_search['values'] = url_list
+        self.url_search['values'] = self.url_list
         self.un_search['values'] = ''
         self.un_search.set('')
         self.set_password('')
@@ -119,20 +121,20 @@ class App(Tk):
     def set_url(self, event):
         value = event.widget.get()
         if value == '':
-            self.url_search['values'] = url_list
+            self.url_search['values'] = self.url_list
             self.un_search['values'] = ''
             self.un_search.set('')
             self.set_password('')
         else:
             data = []
-            for item in url_list:
+            for item in self.url_list:
                 if value.lower() in item.lower():
                     data.append(item)
             self.url_search['values'] = data
 
-            if data and self.url_search.get() in db.keys():
+            if data and self.url_search.get() in self.db.keys():
                 self.un_search.set('')
-                self.un_search['values'] = [*db[self.url_search.get()]]
+                self.un_search['values'] = [*self.db[self.url_search.get()]]
             else:
                 " will it be a new username scenario?  if Yes -> set_username handles it "
                 pass
@@ -140,20 +142,20 @@ class App(Tk):
     def config_url(self, event):
         value = event.widget.get()
         if value == '':
-            self.url_search['values'] = url_list
+            self.url_search['values'] = self.url_list
             self.un_search['values'] = ''
             self.un_search.set('')
             self.set_password('')
         else:
             data = []
-            for item in url_list:
+            for item in self.url_list:
                 if value.lower() in item.lower():
                     data.append(item)
             self.url_search['values'] = data
 
             if data and self.url_search.get() in self.db.keys():
                 self.un_search.set('')
-                self.un_search['values'] = [*db[self.url_search.get()]]
+                self.un_search['values'] = [*self.db[self.url_search.get()]]
             else:
                 mb = messagebox.askquestion("Question", "Entered url not in database. Do you want to add?")
                 if mb == "yes":
@@ -175,6 +177,8 @@ class App(Tk):
         # self.un_search.delete(0, "end")
         if "please enter username..." in self.un_search.get():
             self.un_search.delete(0, "end")
+        if "please enter password" in self.password.get():
+            self.password.delete(0, "end")
 
     def set_username(self, event):
         # if self.wait_state:
@@ -183,7 +187,7 @@ class App(Tk):
         #     self.un_search.focus()
         #     self.wait_state = False
 
-        self.url_search['values'] = url_list
+        self.url_search['values'] = self.url_list
         self.set_password('')
         value = event.widget.get()
         if value == '':
@@ -205,15 +209,22 @@ class App(Tk):
                 self.un_search['values'] = data
 
                 if data and self.un_search.get() in [*self.db[self.url_search.get()]]:
-                    self.set_password(self.db[self.url_search.get()][self.un_search.get()])
+                    if self.db[self.url_search.get()][self.un_search.get()]:
+                        self.set_password(self.db[self.url_search.get()][self.un_search.get()])
+                    else:
+                        self.config_username()
                     self.un_search['values'] = [*self.db[self.url_search.get()]]
             else:
                 self.un_search['values'] = ''
 
-    def config_username(self, event):
-        self.url_search['values'] = url_list
+    def config_username(self, *args):
+        self.url_search['values'] = self.url_list
         self.set_password('')
-        value = event.widget.get()
+        try:
+            value = str((args)[0].widget.get())
+        except:
+            value = ''
+        # value = event.widget.get()
         if value == '':
             if self.url_search.get() in self.db.keys():
                 self.un_search['values'] = [*self.db[self.url_search.get()]]
@@ -228,25 +239,30 @@ class App(Tk):
                 self.un_search['values'] = data
 
                 if data and self.un_search.get() in [*self.db[self.url_search.get()]]:
-                    self.set_password(self.db[self.url_search.get()][self.un_search.get()])
+                    if self.db[self.url_search.get()][self.un_search.get()]:
+                        self.set_password(self.db[self.url_search.get()][self.un_search.get()])
+                    else:
+                        self.config_username()
                     self.un_search['values'] = [*self.db[self.url_search.get()]]
                 else:
                     if self.un_search.get() == "please enter username...":
                         self.clear_temp_text()
                     mb = messagebox.askquestion("Question", "Entered username not in database. Do you want to add?")
+                    print(mb)
                     if mb == "yes":
                         mb1 = messagebox.askquestion("Confirm", "please confirm username: %s" % (self.un_search.get()))
+                        print(mb1)
                         if mb1 == "yes":
                             self.db[self.url_search.get()][self.un_search.get()] = None
                             # need to add password here into database
                             self.password.configure(state='normal', show="")
                             self.password.delete(0, END)
-                            self.password.insert(0, 'please enter password')
+                            self.password.insert(0, 'please enter password...')
+                            # self.un_search.focus()
                             self.password.focus()
                             # self.create_password()
                         else:
                             pass
-
 
             else:
                 self.un_search['values'] = ''
@@ -260,21 +276,29 @@ class App(Tk):
             self.password_c.grid(row=7, column=1)
             self.password_c.bind('<Return>', self.confirm_password)
             # self.password_c.focus()
-            self.wrongpass = ttk.Entry(self, font=('Helvetica', self.f_size - 2), width=self.v_width - 5)
-            self.wrongpass.configure(state='readonly')
+            self.wrongpass = ttk.Entry(self, font=('Helvetica', self.f_size - 4), width=self.v_width - 5)
+            self.wrongpass.configure(state='readonly', foreground="red")
             self.wrongpass.grid(row=9, column=1)
+            self.password_c.focus()
         except:
-            pass
-
-        self.confirm_password()
+            print('unexpected behavior')
+            self.confirm_password()
 
     def confirm_password(self, *args):
-        if self.password.get() == self.password_c.get():
+        if self.password.get() == self.password_c.get() and self.password.get():
             self.db[self.url_search.get()][self.un_search.get()] = self.password.get()
             self.password.configure(state='readonly', show="*")
+            # self.password_c.configure(state='readonly', show="*")
+
+            print(self.db)
+            self.url_search['values'] = self.url_list
+            self.un_search['values'] = ''
+            self.un_search.set('')
+            self.url_search.set('')
+            self.set_password('')
+            print('deleting pc and wpass')
             self.password_c.grid_remove()
             self.wrongpass.grid_remove()
-            print(self.db)
         elif self.password_c.get() == '':
             self.wrongpass.configure(state='normal')
             self.wrongpass.delete(0, END)
@@ -284,7 +308,7 @@ class App(Tk):
         else:
             self.wrongpass.configure(state='normal')
             self.wrongpass.delete(0, END)
-            self.wrongpass.insert(0, 'wrong password')
+            self.wrongpass.insert(0, 'Password does not match... ')
             self.wrongpass.configure(state='readonly')
 
             self.password_c.delete(0, END)
@@ -313,27 +337,29 @@ class App(Tk):
     def clear_clipboard(self):
         self.clipboard_clear()
 
+
 if __name__ == "__main__":
     """ database needs to be sync with encrypt """
-    url_list = [
-        "gmail.com",
-        "outlook.live.com",
-        "netflix.com",
-        "primevideo.com",
-        "hotstar.com"
-    ]
-
-    db = {}
-    for i in url_list:
-        db[i] = {}
-
-    db[url_list[0]]['xxx@gmail.com'] = 'xxx'
-    db[url_list[0]]['yyy@gmail.com'] = 'yyy'
-
-    db[url_list[2]]['prss'] = 'flixpass'
-    db[url_list[3]]['+1234'] = 'primepass'
-    db[url_list[1]]['+1234'] = 'mspass'
-    db[url_list[4]]['+1234'] = 'disneypass'
-    """   ---------------------------------------   """
-    app = App(url_list, db)
+    # url_list = [
+    #     "gmail.com",
+    #     "outlook.live.com",
+    #     "netflix.com",
+    #     "primevideo.com",
+    #     "hotstar.com"
+    # ]
+    #
+    # db = {}
+    # for i in url_list:
+    #     db[i] = {}
+    #
+    # db[url_list[0]]['xxx@gmail.com'] = 'xxx'
+    # db[url_list[0]]['yyy@gmail.com'] = 'yyy'
+    #
+    # db[url_list[2]]['prss'] = 'flixpass'
+    # db[url_list[3]]['+1234'] = 'primepass'
+    # db[url_list[1]]['+1234'] = 'mspass'
+    # db[url_list[4]]['+1234'] = 'disneypass'
+    # """   ---------------------------------------   """
+    # app = App(url_list, db)
+    app = App()
     app.mainloop()
