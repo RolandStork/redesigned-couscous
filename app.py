@@ -299,6 +299,15 @@ class App(Tk):
             self.db[self.url_search.get()][self.un_search.get()] = self.password.get()
             self.password.configure(state='readonly', show="*")
             # self.password_c.configure(state='readonly', show="*")
+            """ 
+            This is where password is finally set
+            self.password.get() 
+            self.un_search.get() 
+            self.url_search.get() will give password, username and url
+            
+            any encryption can be done here... but if you want to get additional information from user, remember various 
+            events can trigger before getting proper data... 
+            """
 
             print(self.db)
             self.url_search['values'] = self.url_list
